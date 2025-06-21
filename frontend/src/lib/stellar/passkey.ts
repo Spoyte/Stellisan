@@ -7,8 +7,9 @@ const getNetworkConfig = () => {
   const network = process.env.NEXT_PUBLIC_STELLAR_NETWORK || 'testnet'
   const rpcUrl = process.env.NEXT_PUBLIC_STELLAR_RPC_URL || 'https://soroban-testnet.stellar.org'
   const networkPassphrase = process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE || Networks.TESTNET
+  const factoryContractId = process.env.NEXT_PUBLIC_PASSKEY_FACTORY_CONTRACT_ID || ''
   
-  return { network, rpcUrl, networkPassphrase }
+  return { network, rpcUrl, networkPassphrase, factoryContractId }
 }
 
 // Initialize PasskeyKit
@@ -16,10 +17,11 @@ let passkeyKit: PasskeyKit | null = null
 
 const getPasskeyKit = () => {
   if (!passkeyKit) {
-    const { rpcUrl, networkPassphrase } = getNetworkConfig()
+    const { rpcUrl, networkPassphrase, factoryContractId } = getNetworkConfig()
     passkeyKit = new PasskeyKit({
       rpcUrl,
       networkPassphrase,
+      factoryContractId,
     })
   }
   return passkeyKit

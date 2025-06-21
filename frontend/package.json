@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^11.0.0",
-    "passkey-kit": "^0.3.2",
+    "passkey-kit": "^0.10.24",
     "next": "^14.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
