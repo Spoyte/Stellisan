@@ -1,8 +1,15 @@
-# **Stellisan ✨ (Stellar \+ Lisan)**
+# **Stellisan ✨ (Stellar + Lisan)**
 
 **Stellisan is a decentralized language learning platform that transforms peer correction into a fair and rewarding economy. Built on the Stellar network, it solves the problem of inconsistent feedback in language apps by creating a merit-based ecosystem where skilled speakers are incentivized to help learners.**
 
-This project is a submission for the Stellar Hackathon in Istanbul.
+*This project is a submission for the Stellar Hackathon in Istanbul.*
+
+## **🎯 Current Status: MVP 80% Complete**
+
+✅ **Smart Contracts**: 4 fully implemented Soroban contracts with comprehensive test suites  
+✅ **Frontend Foundation**: Next.js 14 + TypeScript with modern UI/UX  
+✅ **Passkey Authentication**: Secure, passwordless login with Stellar Passkeys  
+🚧 **Core Features**: Exercise submission and correction flows (in progress)
 
 ## **🚀 The Vision**
 
@@ -27,13 +34,23 @@ Our mission is to create a global, equitable economy for knowledge exchange, pow
 
 ## **🛠️ Technology Stack**
 
-* **Backend:** Rust & the **Soroban SDK** for secure, high-performance smart contracts.  
-* **Frontend:** SvelteKit for a fast and modern user interface.  
-* **Authentication:** **Stellar Passkeys** (passkey-kit SDK) for a passwordless, biometric-first user experience.  
-* **Stellar Infrastructure:**  
-  * **Testnet:** All contracts and transactions are deployed and settled on the Stellar Testnet.  
-  * **Launchtube:** For fee-sponsoring the creation of user smart wallets.  
-  * **Soroban RPC:** For all frontend communication with the smart contracts.
+### **Smart Contracts (Soroban)**
+* **Language:** Rust with Soroban SDK 20.0.0
+* **Contracts:** 4 modular smart contracts with cross-contract integration
+* **Testing:** Comprehensive test suites for all contract functionality
+* **Security:** Built-in access controls and error handling
+
+### **Frontend**
+* **Framework:** Next.js 14 with TypeScript for type safety
+* **Styling:** Tailwind CSS with custom design system
+* **State Management:** Zustand for client-side state
+* **Authentication:** Stellar Passkeys (passkey-kit SDK) for passwordless experience
+
+### **Stellar Infrastructure**
+* **Network:** Stellar Testnet (ready for Mainnet deployment)
+* **RPC:** Soroban RPC for smart contract communication
+* **Wallets:** Smart wallet deployment via Passkey Kit
+* **Tokens:** Native LINGO token with full ERC20-like functionality
 
 ## **⚙️ How It Works (The Core Loop)**
 
@@ -45,29 +62,128 @@ Our mission is to create a global, equitable economy for knowledge exchange, pow
    * Instantly transfer the 10 LINGO from escrow to John's wallet.  
    * Increase John's on-chain reputation score.
 
-## **🏁 Getting Started (For Developers)**
+## **🏗️ Smart Contract Architecture**
 
-This section outlines how to get the project running locally.
+### **Contract Overview**
+```
+UserProfileContract ←→ CorrectionMarketContract
+       ↑                        ↓
+ReputationRewardsContract ←→ LingoTokenContract
+```
 
-**Prerequisites:**
+### **Core Contracts**
 
-* Node.js & npm  
-* Rust & Cargo  
-* Stellar CLI
+1. **UserProfileContract** - Manages user profiles, reputation scores, and activity tracking
+2. **CorrectionMarketContract** - Handles exercise submissions, corrections, and marketplace logic
+3. **ReputationRewardsContract** - Processes rewards and reputation updates based on ratings
+4. **LingoTokenContract** - ERC20-like token for platform economy
 
-**1\. Clone the repository:**
+## **🚀 Getting Started**
 
-git clone https://github.com/Spoyte/stellisan.git  
+### **Prerequisites**
+- Node.js 18+
+- Rust & Cargo (latest stable)
+- Stellar CLI (for contract deployment)
+
+### **Quick Start**
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/Spoyte/stellisan.git
 cd stellisan
+```
 
-**2\. Install frontend dependencies:**
-
+2. **Set up the frontend:**
+```bash
+cd frontend
 npm install
-
-3\. Build and deploy smart contracts:  
-(Instructions to be added for building Rust contracts and deploying via Stellar CLI)  
-**4\. Run the development server:**
-
+cp env.config.example .env.local
+# Update contract addresses in .env.local after deployment
 npm run dev
+```
 
-Visit http://localhost:5173 in your browser.
+3. **Build smart contracts:**
+```bash
+cd contracts
+cargo build --target wasm32-unknown-unknown --release
+```
+
+4. **Deploy contracts** (requires Stellar CLI):
+```bash
+# Deploy each contract to testnet
+soroban contract deploy --wasm target/wasm32-unknown-unknown/release/user_profile.wasm --network testnet
+# Repeat for other contracts...
+```
+
+5. **Visit the application:**
+Open http://localhost:3000 in your browser
+
+### **Project Structure**
+```
+stellisan/
+├── contracts/              # Rust smart contracts
+│   ├── user-profile/      # User management contract
+│   ├── correction-market/ # Exercise & correction logic
+│   ├── reputation-rewards/# Reward calculation
+│   └── lingo-token/       # Platform token
+├── frontend/              # Next.js frontend
+│   ├── src/app/          # Next.js 14 app directory
+│   ├── src/components/   # React components
+│   ├── src/lib/          # Utilities & integrations
+│   └── src/types/        # TypeScript definitions
+└── docs/                 # Documentation
+```
+
+## **🧪 Testing**
+
+### **Smart Contracts**
+```bash
+cd contracts
+cargo test
+```
+
+### **Frontend**
+```bash
+cd frontend
+npm run test
+npm run type-check
+```
+
+## **📚 Documentation**
+
+- [Technical Implementation Plan](docs/technical_plan.md)
+- [Implementation Progress](implementation_progress.md)
+- [Implementation Status](IMPLEMENTATION_STATUS.md)
+- [Frontend README](frontend/README.md)
+
+## **🎯 Roadmap**
+
+### **Phase 1: MVP (Current - 80% Complete)**
+- ✅ Smart contract architecture
+- ✅ Frontend foundation
+- ✅ Passkey authentication
+- 🚧 Core application features
+
+### **Phase 2: Beta Release**
+- Advanced exercise types
+- Mobile-responsive design
+- User analytics dashboard
+- Community moderation tools
+
+### **Phase 3: Production**
+- Mainnet deployment
+- Multi-language UI support
+- Advanced reputation algorithms
+- Mobile app development
+
+## **🤝 Contributing**
+
+We welcome contributions! Please see our contributing guidelines and feel free to submit issues and pull requests.
+
+## **📄 License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## **🏆 Hackathon Submission**
+
+This project was built for the Stellar Hackathon in Istanbul, showcasing the power of Stellar's blockchain technology for creating innovative decentralized applications with real-world utility.
