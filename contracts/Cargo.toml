@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "user-profile",
+    "correction-market", 
+    "reputation-rewards",
+    "lingo-token"
+]
+
+[workspace.dependencies]
+soroban-sdk = "20.0.0" 
