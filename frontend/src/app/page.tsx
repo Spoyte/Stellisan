@@ -1,12 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { BookOpen, Users, Coins, Star } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { BookOpen, Users, Coins, Star, X } from 'lucide-react'
+import { useAuthStore } from '@/lib/stores/auth'
+import { PasskeyLogin } from '@/components/auth/PasskeyLogin'
 
 export default function HomePage() {
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const [showLoginModal, setShowLoginModal] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard')
+    }
+  }, [user, router])
+
+  const handleConnectWallet = () => {
+    setShowLoginModal(true)
+  }
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false)
+    router.push('/dashboard')
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,7 +49,7 @@ export default function HomePage() {
               </Link>
             </nav>
             <div>
-              <button className="btn-primary">
+              <button onClick={handleConnectWallet} className="btn-primary">
                 Connect Wallet
               </button>
             </div>
@@ -130,7 +152,10 @@ export default function HomePage() {
           <p className="text-xl text-white/90 mb-8">
             Join thousands of learners earning crypto while improving their language skills.
           </p>
-          <button className="bg-white text-primary-600 font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors text-lg">
+          <button 
+            onClick={handleConnectWallet}
+            className="bg-white text-primary-600 font-semibold py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors text-lg"
+          >
             Get Started with Passkeys
           </button>
         </div>
@@ -179,6 +204,27 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Stellisan</h2>
+            <p className="text-gray-600 mb-6">
+              Sign in or create an account to start learning and earning
+            </p>
+            
+            <PasskeyLogin onSuccess={handleLoginSuccess} />
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
