@@ -312,7 +312,7 @@ function SettingsTab({ user }: { user: any }) {
 
   const handleLanguageToggle = (language: string) => {
     if (languages.includes(language)) {
-      setLanguages(languages.filter(l => l !== language))
+      setLanguages(languages.filter((l: string) => l !== language))
     } else {
       setLanguages([...languages, language])
     }

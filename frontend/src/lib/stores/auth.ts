@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { AuthState, User, PasskeyCredential } from '@/types/user'
 
 interface AuthStore extends AuthState {
@@ -65,6 +65,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'stellisan-auth',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         user: state.user 
       }),
