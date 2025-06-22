@@ -1,0 +1,1 @@
+/home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/target/wasm32-unknown-unknown/release/reputation_rewards.wasm: /home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/reputation-rewards/src/lib.rs

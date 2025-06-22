@@ -1,13 +1,8 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Symbol, symbol_short};
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Symbol, symbol_short};
 
-#[contracttype]
-pub enum LingoTokenEvent {
-    Transfer { from: Address, to: Address, amount: u64 },
-    Mint { to: Address, amount: u64 },
-    Burn { from: Address, amount: u64 },
-    Approval { owner: Address, spender: Address, amount: u64 },
-}
+// Events temporarily removed - named fields not supported in current SDK version
+// TODO: Re-add events when SDK supports named fields in event enums
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
@@ -20,6 +15,25 @@ pub enum Error {
 
 impl From<Error> for soroban_sdk::Error {
     fn from(e: Error) -> Self {
+        match e {
+            Error::InsufficientBalance => soroban_sdk::Error::from_contract_error(1),
+            Error::InsufficientAllowance => soroban_sdk::Error::from_contract_error(2),
+            Error::Unauthorized => soroban_sdk::Error::from_contract_error(3),
+            Error::InvalidAmount => soroban_sdk::Error::from_contract_error(4),
+        }
+    }
+}
+
+impl TryFrom<soroban_sdk::Error> for Error {
+    type Error = soroban_sdk::Error;
+
+    fn try_from(err: soroban_sdk::Error) -> Result<Self, Self::Error> {
+        Err(err)
+    }
+}
+
+impl From<&Error> for soroban_sdk::Error {
+    fn from(e: &Error) -> Self {
         match e {
             Error::InsufficientBalance => soroban_sdk::Error::from_contract_error(1),
             Error::InsufficientAllowance => soroban_sdk::Error::from_contract_error(2),

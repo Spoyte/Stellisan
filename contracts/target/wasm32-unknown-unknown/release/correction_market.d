@@ -1,0 +1,1 @@
+/home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/target/wasm32-unknown-unknown/release/correction_market.wasm: /home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/correction-market/src/lib.rs

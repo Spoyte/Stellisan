@@ -1,0 +1,1 @@
+/home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/target/wasm32-unknown-unknown/release/user_profile.wasm: /home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/user-profile/src/lib.rs

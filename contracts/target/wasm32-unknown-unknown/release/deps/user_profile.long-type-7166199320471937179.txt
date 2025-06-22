@@ -1,2 +1,0 @@
-for<'a> soroban_sdk::Error: From<&'a Error>
-core::result::Result<UserProfile, Error>

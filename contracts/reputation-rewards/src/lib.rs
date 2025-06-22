@@ -10,11 +10,8 @@ pub struct RewardConfig {
     pub reputation_bonus_per_star: u64,
 }
 
-#[contracttype]
-pub enum ReputationRewardsEvent {
-    RewardProcessed { corrector: Address, amount: u64, rating: u32 },
-    ConfigUpdated { admin: Address },
-}
+// Events temporarily removed - named fields not supported in current SDK version
+// TODO: Re-add events when SDK supports named fields in event enums
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
@@ -27,6 +24,25 @@ pub enum Error {
 
 impl From<Error> for soroban_sdk::Error {
     fn from(e: Error) -> Self {
+        match e {
+            Error::Unauthorized => soroban_sdk::Error::from_contract_error(1),
+            Error::InvalidRating => soroban_sdk::Error::from_contract_error(2),
+            Error::InvalidConfig => soroban_sdk::Error::from_contract_error(3),
+            Error::ContractNotFound => soroban_sdk::Error::from_contract_error(4),
+        }
+    }
+}
+
+impl TryFrom<soroban_sdk::Error> for Error {
+    type Error = soroban_sdk::Error;
+
+    fn try_from(err: soroban_sdk::Error) -> Result<Self, Self::Error> {
+        Err(err)
+    }
+}
+
+impl From<&Error> for soroban_sdk::Error {
+    fn from(e: &Error) -> Self {
         match e {
             Error::Unauthorized => soroban_sdk::Error::from_contract_error(1),
             Error::InvalidRating => soroban_sdk::Error::from_contract_error(2),

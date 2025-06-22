@@ -1,3 +1,0 @@
-for<'a> soroban_sdk::Error: From<&'a Error>
-core::result::Result<(Submission, soroban_sdk::Vec<Correction>), Error>
-core::result::Result<soroban_sdk::Vec<Correction>, Error>

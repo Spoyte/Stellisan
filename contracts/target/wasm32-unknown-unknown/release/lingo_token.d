@@ -1,0 +1,1 @@
+/home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/target/wasm32-unknown-unknown/release/lingo_token.wasm: /home/spoyte/hackathons/Istanbul/stellar/Stellisan/contracts/lingo-token/src/lib.rs
