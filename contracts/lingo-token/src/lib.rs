@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Symbol};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Symbol, symbol_short};
 
 #[contracttype]
 pub enum LingoTokenEvent {
@@ -9,7 +9,8 @@ pub enum LingoTokenEvent {
     Approval { owner: Address, spender: Address, amount: u64 },
 }
 
-#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
 pub enum Error {
     InsufficientBalance = 1,
     InsufficientAllowance = 2,
@@ -17,10 +18,22 @@ pub enum Error {
     InvalidAmount = 4,
 }
 
-const BALANCE_PREFIX: &str = "balance";
-const ALLOWANCE_PREFIX: &str = "allowance";
-const TOTAL_SUPPLY_KEY: &str = "total_supply";
-const ADMIN_KEY: &str = "admin";
+impl From<Error> for soroban_sdk::Error {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::InsufficientBalance => soroban_sdk::Error::from_contract_error(1),
+            Error::InsufficientAllowance => soroban_sdk::Error::from_contract_error(2),
+            Error::Unauthorized => soroban_sdk::Error::from_contract_error(3),
+            Error::InvalidAmount => soroban_sdk::Error::from_contract_error(4),
+        }
+    }
+}
+
+// Storage keys as Symbols
+const BALANCE_PREFIX: Symbol = symbol_short!("balance");
+const ALLOWANCE_PREFIX: Symbol = symbol_short!("allowance");
+const TOTAL_SUPPLY_KEY: Symbol = symbol_short!("total_sup");
+const ADMIN_KEY: Symbol = symbol_short!("admin");
 
 // Token metadata
 const TOKEN_NAME: &str = "LINGO";
@@ -37,20 +50,14 @@ impl LingoTokenContract {
         admin.require_auth();
         
         // Set admin
-        env.storage().instance().set(ADMIN_KEY, &admin);
+        env.storage().instance().set(&ADMIN_KEY, &admin);
         
         // Set total supply
-        env.storage().instance().set(TOTAL_SUPPLY_KEY, &initial_supply);
+        env.storage().instance().set(&TOTAL_SUPPLY_KEY, &initial_supply);
         
         // Give initial supply to admin
-        let balance_key = format!("{}_{}", BALANCE_PREFIX, admin.to_string());
+        let balance_key = (BALANCE_PREFIX, admin.clone());
         env.storage().instance().set(&balance_key, &initial_supply);
-        
-        // Emit mint event
-        env.events().publish(
-            ("mint",),
-            LingoTokenEvent::Mint { to: admin, amount: initial_supply }
-        );
         
         Ok(())
     }
@@ -66,20 +73,20 @@ impl LingoTokenContract {
     }
     
     /// Get token decimals
-    pub fn decimals(env: Env) -> u32 {
+    pub fn decimals(_env: Env) -> u32 {
         TOKEN_DECIMALS
     }
     
     /// Get total supply
     pub fn total_supply(env: Env) -> u64 {
         env.storage().instance()
-            .get(TOTAL_SUPPLY_KEY)
+            .get(&TOTAL_SUPPLY_KEY)
             .unwrap_or(0)
     }
     
     /// Get balance of an account
     pub fn balance(env: Env, account: Address) -> u64 {
-        let balance_key = format!("{}_{}", BALANCE_PREFIX, account.to_string());
+        let balance_key = (BALANCE_PREFIX, account);
         env.storage().instance()
             .get(&balance_key)
             .unwrap_or(0)
@@ -103,17 +110,11 @@ impl LingoTokenContract {
         }
         
         // Update balances
-        let from_balance_key = format!("{}_{}", BALANCE_PREFIX, from.to_string());
-        let to_balance_key = format!("{}_{}", BALANCE_PREFIX, to.to_string());
+        let from_balance_key = (BALANCE_PREFIX, from.clone());
+        let to_balance_key = (BALANCE_PREFIX, to.clone());
         
         env.storage().instance().set(&from_balance_key, &(from_balance - amount));
         env.storage().instance().set(&to_balance_key, &(to_balance + amount));
-        
-        // Emit transfer event
-        env.events().publish(
-            ("transfer",),
-            LingoTokenEvent::Transfer { from: from.clone(), to: to.clone(), amount }
-        );
         
         Ok(())
     }
@@ -122,21 +123,15 @@ impl LingoTokenContract {
     pub fn approve(env: Env, owner: Address, spender: Address, amount: u64) -> Result<(), Error> {
         owner.require_auth();
         
-        let allowance_key = format!("{}_{}_{}", ALLOWANCE_PREFIX, owner.to_string(), spender.to_string());
+        let allowance_key = (ALLOWANCE_PREFIX, owner.clone(), spender.clone());
         env.storage().instance().set(&allowance_key, &amount);
-        
-        // Emit approval event
-        env.events().publish(
-            ("approval",),
-            LingoTokenEvent::Approval { owner, spender, amount }
-        );
         
         Ok(())
     }
     
     /// Get allowance
     pub fn allowance(env: Env, owner: Address, spender: Address) -> u64 {
-        let allowance_key = format!("{}_{}_{}", ALLOWANCE_PREFIX, owner.to_string(), spender.to_string());
+        let allowance_key = (ALLOWANCE_PREFIX, owner, spender);
         env.storage().instance()
             .get(&allowance_key)
             .unwrap_or(0)
@@ -169,22 +164,16 @@ impl LingoTokenContract {
         }
         
         // Update allowance
-        let allowance_key = format!("{}_{}_{}", ALLOWANCE_PREFIX, from.to_string(), spender.to_string());
+        let allowance_key = (ALLOWANCE_PREFIX, from.clone(), spender.clone());
         env.storage().instance().set(&allowance_key, &(current_allowance - amount));
         
         // Update balances
-        let from_balance_key = format!("{}_{}", BALANCE_PREFIX, from.to_string());
-        let to_balance_key = format!("{}_{}", BALANCE_PREFIX, to.to_string());
+        let from_balance_key = (BALANCE_PREFIX, from.clone());
+        let to_balance_key = (BALANCE_PREFIX, to.clone());
         let to_balance = Self::balance(env.clone(), to.clone());
         
         env.storage().instance().set(&from_balance_key, &(from_balance - amount));
         env.storage().instance().set(&to_balance_key, &(to_balance + amount));
-        
-        // Emit transfer event
-        env.events().publish(
-            ("transfer",),
-            LingoTokenEvent::Transfer { from: from.clone(), to: to.clone(), amount }
-        );
         
         Ok(())
     }
@@ -195,7 +184,7 @@ impl LingoTokenContract {
         
         // Verify admin
         let stored_admin: Address = env.storage().instance()
-            .get(ADMIN_KEY)
+            .get(&ADMIN_KEY)
             .ok_or(Error::Unauthorized)?;
         
         if admin != stored_admin {
@@ -208,18 +197,12 @@ impl LingoTokenContract {
         
         // Update total supply
         let current_supply = Self::total_supply(env.clone());
-        env.storage().instance().set(TOTAL_SUPPLY_KEY, &(current_supply + amount));
+        env.storage().instance().set(&TOTAL_SUPPLY_KEY, &(current_supply + amount));
         
         // Update recipient balance
         let to_balance = Self::balance(env.clone(), to.clone());
-        let to_balance_key = format!("{}_{}", BALANCE_PREFIX, to.to_string());
+        let to_balance_key = (BALANCE_PREFIX, to.clone());
         env.storage().instance().set(&to_balance_key, &(to_balance + amount));
-        
-        // Emit mint event
-        env.events().publish(
-            ("mint",),
-            LingoTokenEvent::Mint { to: to.clone(), amount }
-        );
         
         Ok(())
     }
@@ -240,24 +223,18 @@ impl LingoTokenContract {
         
         // Update total supply
         let current_supply = Self::total_supply(env.clone());
-        env.storage().instance().set(TOTAL_SUPPLY_KEY, &(current_supply - amount));
+        env.storage().instance().set(&TOTAL_SUPPLY_KEY, &(current_supply - amount));
         
         // Update balance
-        let from_balance_key = format!("{}_{}", BALANCE_PREFIX, from.to_string());
+        let from_balance_key = (BALANCE_PREFIX, from.clone());
         env.storage().instance().set(&from_balance_key, &(from_balance - amount));
-        
-        // Emit burn event
-        env.events().publish(
-            ("burn",),
-            LingoTokenEvent::Burn { from: from.clone(), amount }
-        );
         
         Ok(())
     }
     
     /// Get admin address
     pub fn get_admin(env: Env) -> Option<Address> {
-        env.storage().instance().get(ADMIN_KEY)
+        env.storage().instance().get(&ADMIN_KEY)
     }
     
     /// Transfer admin rights
@@ -266,7 +243,7 @@ impl LingoTokenContract {
         
         // Verify current admin
         let stored_admin: Address = env.storage().instance()
-            .get(ADMIN_KEY)
+            .get(&ADMIN_KEY)
             .ok_or(Error::Unauthorized)?;
         
         if current_admin != stored_admin {
@@ -274,7 +251,7 @@ impl LingoTokenContract {
         }
         
         // Update admin
-        env.storage().instance().set(ADMIN_KEY, &new_admin);
+        env.storage().instance().set(&ADMIN_KEY, &new_admin);
         
         Ok(())
     }

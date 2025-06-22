@@ -1,7 +1,8 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Symbol, symbol_short};
 
 #[contracttype]
+#[derive(Clone)]
 pub struct RewardConfig {
     pub base_reward: u64,
     pub reputation_multiplier: u64, // Per 100 reputation points
@@ -15,7 +16,8 @@ pub enum ReputationRewardsEvent {
     ConfigUpdated { admin: Address },
 }
 
-#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
 pub enum Error {
     Unauthorized = 1,
     InvalidRating = 2,
@@ -23,8 +25,19 @@ pub enum Error {
     ContractNotFound = 4,
 }
 
-const CONFIG_KEY: &str = "config";
-const ADMIN_KEY: &str = "admin";
+impl From<Error> for soroban_sdk::Error {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::Unauthorized => soroban_sdk::Error::from_contract_error(1),
+            Error::InvalidRating => soroban_sdk::Error::from_contract_error(2),
+            Error::InvalidConfig => soroban_sdk::Error::from_contract_error(3),
+            Error::ContractNotFound => soroban_sdk::Error::from_contract_error(4),
+        }
+    }
+}
+
+const CONFIG_KEY: Symbol = symbol_short!("config");
+const ADMIN_KEY: Symbol = symbol_short!("admin");
 
 #[contract]
 pub struct ReputationRewardsContract;
@@ -36,7 +49,7 @@ impl ReputationRewardsContract {
         admin.require_auth();
         
         // Set admin
-        env.storage().instance().set(ADMIN_KEY, &admin);
+        env.storage().instance().set(&ADMIN_KEY, &admin);
         
         // Set default configuration
         let default_config = RewardConfig {
@@ -46,7 +59,7 @@ impl ReputationRewardsContract {
             reputation_bonus_per_star: 5, // 5 reputation points per star
         };
         
-        env.storage().instance().set(CONFIG_KEY, &default_config);
+        env.storage().instance().set(&CONFIG_KEY, &default_config);
         
         Ok(())
     }
@@ -68,7 +81,7 @@ impl ReputationRewardsContract {
         }
         
         let config: RewardConfig = env.storage().instance()
-            .get(CONFIG_KEY)
+            .get(&CONFIG_KEY)
             .ok_or(Error::InvalidConfig)?;
         
         // Only process reward if rating meets minimum threshold
@@ -90,16 +103,6 @@ impl ReputationRewardsContract {
             
             // TODO: Call UserProfile contract to update reputation
             // This would require cross-contract calls
-            
-            // Emit event
-            env.events().publish(
-                ("reward_processed",),
-                ReputationRewardsEvent::RewardProcessed { 
-                    corrector: corrector.clone(), 
-                    amount: reward_amount, 
-                    rating 
-                }
-            );
         }
         
         Ok(())
@@ -113,7 +116,7 @@ impl ReputationRewardsContract {
         base_fee: u64
     ) -> u64 {
         let config: RewardConfig = env.storage().instance()
-            .get(CONFIG_KEY)
+            .get(&CONFIG_KEY)
             .unwrap_or(RewardConfig {
                 base_reward: 10,
                 reputation_multiplier: 10,
@@ -166,7 +169,7 @@ impl ReputationRewardsContract {
         
         // Verify admin
         let stored_admin: Address = env.storage().instance()
-            .get(ADMIN_KEY)
+            .get(&ADMIN_KEY)
             .ok_or(Error::Unauthorized)?;
         
         if admin != stored_admin {
@@ -179,13 +182,7 @@ impl ReputationRewardsContract {
         }
         
         // Update configuration
-        env.storage().instance().set(CONFIG_KEY, &config);
-        
-        // Emit event
-        env.events().publish(
-            ("config_updated",),
-            ReputationRewardsEvent::ConfigUpdated { admin }
-        );
+        env.storage().instance().set(&CONFIG_KEY, &config);
         
         Ok(())
     }
@@ -193,7 +190,7 @@ impl ReputationRewardsContract {
     /// Get current configuration
     pub fn get_config(env: Env) -> RewardConfig {
         env.storage().instance()
-            .get(CONFIG_KEY)
+            .get(&CONFIG_KEY)
             .unwrap_or(RewardConfig {
                 base_reward: 10,
                 reputation_multiplier: 10,
@@ -204,7 +201,7 @@ impl ReputationRewardsContract {
     
     /// Get admin address
     pub fn get_admin(env: Env) -> Option<Address> {
-        env.storage().instance().get(ADMIN_KEY)
+        env.storage().instance().get(&ADMIN_KEY)
     }
     
     /// Transfer admin rights
@@ -213,7 +210,7 @@ impl ReputationRewardsContract {
         
         // Verify current admin
         let stored_admin: Address = env.storage().instance()
-            .get(ADMIN_KEY)
+            .get(&ADMIN_KEY)
             .ok_or(Error::Unauthorized)?;
         
         if current_admin != stored_admin {
@@ -221,7 +218,7 @@ impl ReputationRewardsContract {
         }
         
         // Update admin
-        env.storage().instance().set(ADMIN_KEY, &new_admin);
+        env.storage().instance().set(&ADMIN_KEY, &new_admin);
         
         Ok(())
     }

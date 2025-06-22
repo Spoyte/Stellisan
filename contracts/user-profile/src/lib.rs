@@ -2,6 +2,7 @@
 use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Vec, String};
 
 #[contracttype]
+#[derive(Clone)]
 pub struct UserProfile {
     pub reputation_score: u64,
     pub total_corrections: u32,
@@ -17,12 +18,24 @@ pub enum UserProfileEvent {
     ReputationUpdated { user: Address, new_score: u64, change: i64 },
 }
 
-#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
 pub enum Error {
     ProfileAlreadyExists = 1,
     ProfileNotFound = 2,
     Unauthorized = 3,
     InvalidInput = 4,
+}
+
+impl From<Error> for soroban_sdk::Error {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::ProfileAlreadyExists => soroban_sdk::Error::from_contract_error(1),
+            Error::ProfileNotFound => soroban_sdk::Error::from_contract_error(2),
+            Error::Unauthorized => soroban_sdk::Error::from_contract_error(3),
+            Error::InvalidInput => soroban_sdk::Error::from_contract_error(4),
+        }
+    }
 }
 
 #[contract]
@@ -44,7 +57,7 @@ impl UserProfileContract {
         }
         
         // Validate input
-        if languages.is_empty() {
+        if languages.len() == 0 {
             return Err(Error::InvalidInput);
         }
         
@@ -58,12 +71,6 @@ impl UserProfileContract {
         };
         
         env.storage().instance().set(&user, &profile);
-        
-        // Emit event
-        env.events().publish(
-            ("profile_created",),
-            UserProfileEvent::ProfileCreated { user: user.clone() }
-        );
         
         Ok(())
     }
@@ -102,16 +109,6 @@ impl UserProfileContract {
         profile.last_activity = env.ledger().timestamp();
         
         env.storage().instance().set(&user, &profile);
-        
-        // Emit event
-        env.events().publish(
-            ("reputation_updated",),
-            UserProfileEvent::ReputationUpdated { 
-                user: user.clone(), 
-                new_score, 
-                change: score_change 
-            }
-        );
         
         Ok(())
     }

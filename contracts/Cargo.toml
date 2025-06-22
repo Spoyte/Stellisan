@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "user-profile",
     "correction-market", 
@@ -7,4 +8,4 @@ members = [
 ]
 
 [workspace.dependencies]
-soroban-sdk = "20.0.0" 
+soroban-sdk = "20.5.0" 

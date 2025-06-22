@@ -1,7 +1,8 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Vec, String, Map, BytesN};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, Vec, String, Map, BytesN, Symbol, symbol_short};
 
 #[contracttype]
+#[derive(Clone)]
 pub struct Submission {
     pub id: u64,
     pub learner: Address,
@@ -14,6 +15,7 @@ pub struct Submission {
 }
 
 #[contracttype]
+#[derive(Clone)]
 pub struct Correction {
     pub corrector: Address,
     pub correction_text: String,
@@ -22,6 +24,7 @@ pub struct Correction {
 }
 
 #[contracttype]
+#[derive(Clone)]
 pub enum SubmissionStatus {
     Open,
     HasCorrections,
@@ -36,7 +39,8 @@ pub enum CorrectionMarketEvent {
     CorrectionRated { submission_id: u64, corrector: Address, rating: u32 },
 }
 
-#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
 pub enum Error {
     SubmissionNotFound = 1,
     Unauthorized = 2,
@@ -47,9 +51,23 @@ pub enum Error {
     AlreadyCorrected = 7,
 }
 
-const SUBMISSION_COUNTER: &str = "sub_counter";
-const SUBMISSION_PREFIX: &str = "submission";
-const CORRECTIONS_PREFIX: &str = "corrections";
+impl From<Error> for soroban_sdk::Error {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::SubmissionNotFound => soroban_sdk::Error::from_contract_error(1),
+            Error::Unauthorized => soroban_sdk::Error::from_contract_error(2),
+            Error::InvalidInput => soroban_sdk::Error::from_contract_error(3),
+            Error::AlreadyRated => soroban_sdk::Error::from_contract_error(4),
+            Error::InsufficientFunds => soroban_sdk::Error::from_contract_error(5),
+            Error::SubmissionClosed => soroban_sdk::Error::from_contract_error(6),
+            Error::AlreadyCorrected => soroban_sdk::Error::from_contract_error(7),
+        }
+    }
+}
+
+const SUBMISSION_COUNTER: Symbol = symbol_short!("sub_count");
+const SUBMISSION_PREFIX: Symbol = symbol_short!("sub");
+const CORRECTIONS_PREFIX: Symbol = symbol_short!("corr");
 
 #[contract]
 pub struct CorrectionMarketContract;
@@ -66,18 +84,20 @@ impl CorrectionMarketContract {
     ) -> Result<u64, Error> {
         learner.require_auth();
         
-        // Validate input
-        if exercise_text.is_empty() || language.is_empty() || fee_amount == 0 {
+        // Validate input - check if strings have content
+        let exercise_bytes = exercise_text.bytes();
+        let language_bytes = language.bytes();
+        if exercise_bytes.len() == 0 || language_bytes.len() == 0 || fee_amount == 0 {
             return Err(Error::InvalidInput);
         }
         
         // Get next submission ID
         let submission_id = env.storage().instance()
-            .get::<&str, u64>(SUBMISSION_COUNTER)
+            .get::<Symbol, u64>(&SUBMISSION_COUNTER)
             .unwrap_or(0) + 1;
         
         // Create exercise hash for integrity
-        let exercise_hash = env.crypto().sha256(&exercise_text.to_bytes());
+        let exercise_hash = env.crypto().sha256(&exercise_bytes);
         
         let submission = Submission {
             id: submission_id,
@@ -91,26 +111,16 @@ impl CorrectionMarketContract {
         };
         
         // Store submission
-        let submission_key = format!("{}_{}", SUBMISSION_PREFIX, submission_id);
+        let submission_key = (SUBMISSION_PREFIX, submission_id);
         env.storage().instance().set(&submission_key, &submission);
         
         // Update counter
-        env.storage().instance().set(SUBMISSION_COUNTER, &submission_id);
+        env.storage().instance().set(&SUBMISSION_COUNTER, &submission_id);
         
         // Initialize empty corrections map
-        let corrections_key = format!("{}_{}", CORRECTIONS_PREFIX, submission_id);
+        let corrections_key = (CORRECTIONS_PREFIX, submission_id);
         let corrections: Map<Address, Correction> = Map::new(&env);
         env.storage().instance().set(&corrections_key, &corrections);
-        
-        // Emit event
-        env.events().publish(
-            ("exercise_submitted",),
-            CorrectionMarketEvent::ExerciseSubmitted { 
-                submission_id, 
-                learner: learner.clone(), 
-                language 
-            }
-        );
         
         Ok(submission_id)
     }
@@ -125,12 +135,12 @@ impl CorrectionMarketContract {
         corrector.require_auth();
         
         // Validate input
-        if correction_text.is_empty() {
+        if correction_text.bytes().len() == 0 {
             return Err(Error::InvalidInput);
         }
         
         // Get submission
-        let submission_key = format!("{}_{}", SUBMISSION_PREFIX, submission_id);
+        let submission_key = (SUBMISSION_PREFIX, submission_id);
         let mut submission: Submission = env.storage().instance()
             .get(&submission_key)
             .ok_or(Error::SubmissionNotFound)?;
@@ -142,7 +152,7 @@ impl CorrectionMarketContract {
         }
         
         // Check if corrector already submitted a correction
-        let corrections_key = format!("{}_{}", CORRECTIONS_PREFIX, submission_id);
+        let corrections_key = (CORRECTIONS_PREFIX, submission_id);
         let mut corrections: Map<Address, Correction> = env.storage().instance()
             .get(&corrections_key)
             .unwrap_or(Map::new(&env));
@@ -167,15 +177,6 @@ impl CorrectionMarketContract {
         submission.status = SubmissionStatus::HasCorrections;
         env.storage().instance().set(&submission_key, &submission);
         
-        // Emit event
-        env.events().publish(
-            ("correction_added",),
-            CorrectionMarketEvent::CorrectionAdded { 
-                submission_id, 
-                corrector: corrector.clone() 
-            }
-        );
-        
         Ok(())
     }
     
@@ -195,7 +196,7 @@ impl CorrectionMarketContract {
         }
         
         // Get submission and verify learner ownership
-        let submission_key = format!("{}_{}", SUBMISSION_PREFIX, submission_id);
+        let submission_key = (SUBMISSION_PREFIX, submission_id);
         let mut submission: Submission = env.storage().instance()
             .get(&submission_key)
             .ok_or(Error::SubmissionNotFound)?;
@@ -205,7 +206,7 @@ impl CorrectionMarketContract {
         }
         
         // Get corrections
-        let corrections_key = format!("{}_{}", CORRECTIONS_PREFIX, submission_id);
+        let corrections_key = (CORRECTIONS_PREFIX, submission_id);
         let mut corrections: Map<Address, Correction> = env.storage().instance()
             .get(&corrections_key)
             .ok_or(Error::SubmissionNotFound)?;
@@ -225,21 +226,17 @@ impl CorrectionMarketContract {
         env.storage().instance().set(&corrections_key, &corrections);
         
         // Check if this was the last correction to be rated
-        let all_rated = corrections.values().iter().all(|c| c.rating.is_some());
+        let mut all_rated = true;
+        for correction in corrections.values() {
+            if correction.rating.is_none() {
+                all_rated = false;
+                break;
+            }
+        }
         if all_rated {
             submission.status = SubmissionStatus::Completed;
             env.storage().instance().set(&submission_key, &submission);
         }
-        
-        // Emit event
-        env.events().publish(
-            ("correction_rated",),
-            CorrectionMarketEvent::CorrectionRated { 
-                submission_id, 
-                corrector: corrector.clone(), 
-                rating 
-            }
-        );
         
         Ok(())
     }
@@ -252,7 +249,7 @@ impl CorrectionMarketContract {
     ) -> Vec<Submission> {
         let mut results = Vec::new(&env);
         let counter = env.storage().instance()
-            .get::<&str, u64>(SUBMISSION_COUNTER)
+            .get::<Symbol, u64>(&SUBMISSION_COUNTER)
             .unwrap_or(0);
         
         let mut found = 0u32;
@@ -263,8 +260,8 @@ impl CorrectionMarketContract {
                 break;
             }
             
-            let submission_key = format!("{}_{}", SUBMISSION_PREFIX, i);
-            if let Some(submission) = env.storage().instance().get::<String, Submission>(&submission_key) {
+            let submission_key = (SUBMISSION_PREFIX, i);
+            if let Some(submission) = env.storage().instance().get::<(Symbol, u64), Submission>(&submission_key) {
                 if submission.language == language {
                     match submission.status {
                         SubmissionStatus::Open | SubmissionStatus::HasCorrections => {
@@ -285,12 +282,12 @@ impl CorrectionMarketContract {
         env: Env,
         submission_id: u64
     ) -> Result<(Submission, Vec<Correction>), Error> {
-        let submission_key = format!("{}_{}", SUBMISSION_PREFIX, submission_id);
+        let submission_key = (SUBMISSION_PREFIX, submission_id);
         let submission: Submission = env.storage().instance()
             .get(&submission_key)
             .ok_or(Error::SubmissionNotFound)?;
         
-        let corrections_key = format!("{}_{}", CORRECTIONS_PREFIX, submission_id);
+        let corrections_key = (CORRECTIONS_PREFIX, submission_id);
         let corrections_map: Map<Address, Correction> = env.storage().instance()
             .get(&corrections_key)
             .unwrap_or(Map::new(&env));
@@ -305,7 +302,7 @@ impl CorrectionMarketContract {
         env: Env,
         submission_id: u64
     ) -> Result<Vec<Correction>, Error> {
-        let corrections_key = format!("{}_{}", CORRECTIONS_PREFIX, submission_id);
+        let corrections_key = (CORRECTIONS_PREFIX, submission_id);
         let corrections_map: Map<Address, Correction> = env.storage().instance()
             .get(&corrections_key)
             .ok_or(Error::SubmissionNotFound)?;
@@ -316,7 +313,7 @@ impl CorrectionMarketContract {
     /// Get total number of submissions
     pub fn get_total_submissions(env: Env) -> u64 {
         env.storage().instance()
-            .get::<&str, u64>(SUBMISSION_COUNTER)
+            .get::<Symbol, u64>(&SUBMISSION_COUNTER)
             .unwrap_or(0)
     }
 }

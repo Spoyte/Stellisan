@@ -1,0 +1,1 @@
+for<'a> soroban_sdk::Error: From<&'a Error>
