@@ -89,7 +89,7 @@ ReputationRewardsContract ←→ LingoTokenContract
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/Spoyte/stellisan.git
+git clone https://github.com/Spoyte/stellisan.git  
 cd stellisan
 ```
 
