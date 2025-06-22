@@ -18,6 +18,7 @@ import { Header } from '@/components/common/Header'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { ActivityFeed, Activity } from '@/components/dashboard/ActivityFeed'
 import { SUPPORTED_LANGUAGES } from '@/types/exercises'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -81,8 +82,9 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
-      <Header />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+        <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
@@ -210,5 +212,6 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   )
 } 

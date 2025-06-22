@@ -1,13 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { BookOpen, Users, Coins, Star, X } from 'lucide-react'
+import { useAuthStore } from '@/lib/stores/auth'
+import { PasskeyLogin } from '@/components/auth/PasskeyLogin'
 
 export default function HomePage() {
+  const router = useRouter()
+  const { user } = useAuthStore()
   const [showLoginModal, setShowLoginModal] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard')
+    }
+  }, [user, router])
 
   const handleConnectWallet = () => {
     setShowLoginModal(true)
+  }
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false)
+    router.push('/dashboard')
   }
 
   return (
@@ -17,6 +34,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
+              <BookOpen className="h-8 w-8 text-primary-500" />
               <span className="ml-2 text-2xl font-bold text-gray-900">Stellisan</span>
             </div>
             <nav className="hidden md:flex space-x-8">
@@ -70,7 +88,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="card text-center">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                📚
+                <BookOpen className="h-8 w-8 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Submit Exercises</h3>
               <p className="text-gray-600">
@@ -80,7 +98,7 @@ export default function HomePage() {
             
             <div className="card text-center">
               <div className="w-16 h-16 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                👥
+                <Users className="h-8 w-8 text-secondary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Get Corrections</h3>
               <p className="text-gray-600">
@@ -90,7 +108,7 @@ export default function HomePage() {
             
             <div className="card text-center">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                🪙
+                <Coins className="h-8 w-8 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Earn LINGO</h3>
               <p className="text-gray-600">
@@ -149,6 +167,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
+                <BookOpen className="h-6 w-6 text-primary-400" />
                 <span className="ml-2 text-xl font-bold">Stellisan</span>
               </div>
               <p className="text-gray-400">
@@ -194,7 +213,7 @@ export default function HomePage() {
               onClick={() => setShowLoginModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
             >
-              ✕
+              <X className="h-5 w-5" />
             </button>
             
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Stellisan</h2>
@@ -202,14 +221,7 @@ export default function HomePage() {
               Sign in or create an account to start learning and earning
             </p>
             
-            <div className="space-y-4">
-              <button className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-lg">
-                🔐 Sign in with Biometrics
-              </button>
-              <p className="text-xs text-gray-500 text-center">
-                Secure authentication using your device's biometrics
-              </p>
-            </div>
+            <PasskeyLogin onSuccess={handleLoginSuccess} />
           </div>
         </div>
       )}

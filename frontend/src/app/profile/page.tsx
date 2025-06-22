@@ -18,6 +18,8 @@ import {
 import { useAuthStore } from '@/lib/stores/auth'
 import { formatAddress } from '@/lib/stellar/passkey'
 import { SUPPORTED_LANGUAGES } from '@/types/exercises'
+import { Header } from '@/components/common/Header'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -59,29 +61,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-primary-500" />
-              <span className="ml-2 text-2xl font-bold text-gray-900">Stellisan</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -180,6 +163,7 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
 

@@ -28,6 +28,15 @@ export const useAuthStore = create<AuthStore>()(
             address: credential.walletAddress,
             keyId: credential.keyId,
             isConnected: true,
+            // Add mock profile data for demo
+            profile: {
+              reputation_score: Math.floor(Math.random() * 200) + 100,
+              total_corrections: Math.floor(Math.random() * 20),
+              total_submissions: Math.floor(Math.random() * 15),
+              last_activity: Date.now(),
+              languages: ['English', 'Spanish', 'French'].slice(0, Math.floor(Math.random() * 3) + 1),
+              is_verified: true
+            }
           }
           
           // TODO: Fetch user profile from UserProfile contract
