@@ -11,7 +11,6 @@
 8. [Technical Requirements](#technical-requirements)
 9. [Security Considerations](#security-considerations)
 10. [Testing Strategy](#testing-strategy)
-11. [Deployment & Hosting](#deployment-hosting)
 
 ## Project Overview
 
@@ -243,7 +242,6 @@ src/
 │       └── page.tsx
 ├── components/
 │   ├── ui/
-│   ├── auth/
 │   │   ├── PasskeyLogin.tsx
 │   │   └── WalletProvider.tsx
 │   ├── exercises/
@@ -575,32 +573,7 @@ mod tests {
 3. **Reward Distribution**: Verify token transfers and reputation updates
 4. **Mobile Experience**: Test on various devices and screen sizes
 
-## 11. Deployment & Hosting
-
-| Layer | Service | Notes |
-|-------|---------|-------|
-| Front-end | **Vercel** | Root directory set to `frontend`; auto-deploy on git push, preview URLs for PRs |
-| Contracts | Soroban RPC / Stellar Testnet | Build & deploy with `soroban-cli` (can be automated via GitHub Actions) |
-
-### Front-end pipeline
-1. Developer pushes to GitHub.  
-2. GitHub → Vercel webhook triggers build inside `/frontend`.  
-3. Vercel installs deps (`npm ci`), runs `npm run build`, serves `.next`.  
-4. Preview URL is posted back to the Pull-Request (e.g. `https://stellisan-git-feature-chat.vercel.app`).  
-5. Merge to `main` promotes the latest build to **Production**.
-
-### Environment variables on Vercel
-Add everything from `env.config.example` with scope **Production and Preview** so that preview deployments interact with the same Stellar testnet.
-
-### CLI / local prod test
-```bash
-cd frontend
-npm install
-npm run build
-npm start  # http://localhost:3000
-```
-
-*(End of technical plan)*
+---
 
 ## Questions for Clarification
 

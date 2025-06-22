@@ -90,11 +90,47 @@ The application requires a modern browser with WebAuthn support for passkey auth
 
 ## Deployment
 
-The frontend can be deployed to any platform that supports Next.js:
+This project is optimised for **Vercel** – the company that created Next.js – but will work on any provider that supports a standard Next.js build.  
+Below is the quick-start guide for Vercel (automatic previews on each pull-request, production on `main`).
 
-- Vercel (recommended)
-- Netlify
-- AWS Amplify
-- Docker
+### 1. One-click import
 
-Make sure to set all required environment variables in your deployment platform. 
+1. Sign in to Vercel with your GitHub account.
+2. Click **"Add New → Project" → Import Git Repository** and choose this repo.
+3. In the *Configure Project* step set **Root Directory** to `frontend` – this tells Vercel where the `package.json` lives.
+4. Leave the default Build & Output commands that Vercel detects (`npm run build` / `.next`).
+5. Click **Deploy** – the first production deployment will be available in ~30 seconds.
+
+### 2. Environment variables
+
+After the first build open **Project → Settings → Environment Variables** and add everything that exists in `env.config.example` (e.g. `NEXT_PUBLIC_STELLAR_RPC_URL`, contract IDs, etc.).  
+Set the scope to **"Production and Preview"** so every preview URL also has access.
+
+### 3. Automatic deployments
+
+• Any push to **feature/…** branches ⇒ *Preview* deployment with its own URL.  
+• Any push/merge to **main** ⇒ *Production* deployment.
+
+### 4. Custom domains / analytics (optional)
+
+• Add a custom domain under **Settings → Domains**.  
+• Enable Vercel Web-Analytics for free traffic stats.
+
+### 5. Local production test
+
+```bash
+# Inside ./frontend
+npm install
+npm run build   # should complete without errors
+npm start       # serves the build on http://localhost:3000
+```
+
+### 6. Starting from the repo root
+
+At the root of the repository there is a helper script:
+
+```bash
+./start-frontend.sh
+```
+
+It drops you into `frontend/`, installs dependencies (if missing) and starts the dev server using the WSL-friendly flags `--hostname 0.0.0.0 --port 3000`. 

@@ -187,3 +187,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## **🏆 Hackathon Submission**
 
 This project was built for the Stellar Hackathon in Istanbul, showcasing the power of Stellar's blockchain technology for creating innovative decentralized applications with real-world utility.
+
+## ☁️ Deployment & Hosting
+
+The easiest way to host the Stellisan front-end is with **Vercel** (free Hobby plan is enough):
+
+1. Push your fork/clone of this repo to GitHub.
+2. Sign in to Vercel → **Add New → Project** → import this repo.
+3. When Vercel asks for **Root Directory** enter `frontend` (the folder that contains the Next.js project).
+4. Click **Deploy**.  
+   Vercel will build the app and give you a production URL like `https://stellisan.vercel.app` within ~30 seconds.
+5. Add all variables from `frontend/env.config.example` under **Settings → Environment Variables**.
+
+Every new git push will trigger either a *Preview* (if the branch is not `main`) or *Production* deployment automatically.
